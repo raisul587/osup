@@ -6,6 +6,7 @@ import sys
 import csv
 import time
 import socket
+import codecs
 import pathlib
 import tempfile
 import shutil

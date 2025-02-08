@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 class NetworkAddress:
+    """Class for handling MAC addresses in both string and integer formats"""
     def __init__(self, mac):
         if isinstance(mac, int):
             self._int_repr = mac
@@ -67,4 +68,4 @@ class NetworkAddress:
 
     def __repr__(self):
         return 'NetworkAddress(string={}, integer={})'.format(
-            self._str_repr, self._int_repr)
+            self._str_repr, self._int_repr) 

@@ -512,32 +512,30 @@ class Companion:
 
     def __prompt_wpspin(self, bssid):
         pins = self.generator.getSuggested(bssid)
-        if len(pins) > 1:
-            print(f'PINs generated for {bssid}:')
+        if len(pins) > 0:
+            print(f'[*] Generated PINs for {bssid}:')
             print('{:<3} {:<10} {:<}'.format('#', 'PIN', 'Name'))
             for i, pin in enumerate(pins):
                 number = '{})'.format(i + 1)
                 line = '{:<3} {:<10} {:<}'.format(
                     number, pin['pin'], pin['name'])
                 print(line)
-            while 1:
-                pinNo = input('Select the PIN: ')
-                try:
-                    if int(pinNo) in range(1, len(pins)+1):
-                        pin = pins[int(pinNo) - 1]['pin']
-                    else:
-                        raise IndexError
-                except Exception:
-                    print('Invalid number')
-                else:
-                    break
-        elif len(pins) == 1:
-            pin = pins[0]
-            print('[i] The only probable PIN is selected:', pin['name'])
-            pin = pin['pin']
-        else:
+            
+            # Try each PIN in sequence
+            for pin_data in pins:
+                print(f"\n[*] Trying {pin_data['name']} PIN: {pin_data['pin']}")
+                if self.__wps_connection(bssid, pin_data['pin']):
+                    return pin_data['pin']
+                if self.connection_status.status == 'GOT_PSK':
+                    return pin_data['pin']
+                print(f"[-] PIN {pin_data['pin']} failed, trying next...")
+                time.sleep(1)  # Small delay between attempts
+            
+            print('[-] All generated PINs failed')
             return None
-        return pin
+        else:
+            print('[!] No PINs could be generated for this device')
+            return None
 
     def __wps_connection(self, bssid=None, pin=None, pixiemode=False, pbc_mode=False, verbose=None):
         if not verbose:

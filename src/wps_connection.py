@@ -474,7 +474,7 @@ class Companion:
                         print(f"[+] {strategy_name} strategy successful!")
                         return pin
             else:
-                if verbose:
+                if self.print_debug:
                     print(f"[-] {strategy_name} strategy failed:")
                     print(r.stderr)
         

@@ -148,9 +148,11 @@ class ConnectionStatus:
         self.wpa_psk = ''
         self.bssid = ''
         self.retry_count = 0
-        self.max_retries = 3
+        self.max_retries = 5  # Increased from 3 to 5
         self.timeout = 30  # Default timeout in seconds
         self.last_state_change = time.time()
+        self.deauth_count = 0
+        self.max_deauth = 3
 
     def isFirstHalfValid(self):
         return self.last_m_message > 5
@@ -548,13 +550,18 @@ class Companion:
             print('[!] Connection timed out, retrying...')
             if self.connection_status.incrementRetry():
                 self.sendOnly('WPS_CANCEL')
-                time.sleep(1)  # Give time for cleanup
+                time.sleep(1)  # Reduced delay
                 return self.__wps_connection(bssid, pin, pixiemode, pbc_mode, verbose)
             else:
                 print('[-] Maximum retries reached')
                 return False
 
         def handle_deauth():
+            self.connection_status.deauth_count += 1
+            if self.connection_status.deauth_count >= self.connection_status.max_deauth:
+                print('[!] Too many deauthentications, AP may have WPS locked')
+                return False
+                
             print('[!] Deauthenticated, attempting to reconnect...')
             if self.connection_status.incrementRetry():
                 time.sleep(2)  # Wait before retry
@@ -603,7 +610,7 @@ class Companion:
                 if self.connection_status.canRetry():
                     print('[!] WPS failure detected, retrying...')
                     self.sendOnly('WPS_CANCEL')
-                    time.sleep(1)
+                    time.sleep(1)  # Reduced delay
                     return self.__wps_connection(bssid, pin, pixiemode, pbc_mode, verbose)
                 break
 
@@ -754,4 +761,9 @@ class Companion:
         os.remove(self.tempconf)
 
     def __del__(self):
+        try:
+            self.cleanup()
+        except Exception as e:
+            print(f"Error during cleanup: {e}")
+            pass
         self.cleanup() 
